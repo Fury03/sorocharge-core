@@ -93,7 +93,16 @@ pub enum MppError {
     /// structurally valid envelope of the wrong shape is
     /// [`MppError::UnexpectedTransactionShape`].
     XdrDecodingFailed { reason: String },
-    /// The credential's JSON did not deserialize into the expected shape.
+    /// A push-mode (`Payload::Hash`) credential's transaction hash is not a
+    /// 64-character hex string encoding 32 bytes.
+    ///
+    /// This is the only place the crate returns this variant
+    /// (`MppServer::settle_credential`, push mode, before the hash is looked
+    /// up over RPC). This crate never deserializes a credential's JSON
+    /// itself: the caller parses the `Credential`, and a malformed
+    /// `Payload::Transaction` is reported as
+    /// [`MppError::XdrDecodingFailed`] or
+    /// [`MppError::UnexpectedTransactionShape`] instead.
     InvalidCredential { reason: String },
     /// The transaction does not authorize a single, bare SEP-41
     /// `transfer(from, to, amount)` call.
