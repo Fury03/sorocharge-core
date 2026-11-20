@@ -66,7 +66,27 @@ pub enum MppError {
     /// `SorochargeError` already distinguishes them; match on the inner
     /// error to tell them apart.
     Signing(SorochargeError),
-    /// Building or parsing an XDR structure failed.
+    /// Building or serializing an XDR structure failed. Parsing and
+    /// base64-decoding XDR is reported as [`MppError::XdrDecodingFailed`]
+    /// instead.
+    ///
+    /// Returned when:
+    /// - a transaction-building helper cannot fit a value into its
+    ///   XDR-bounded container (the `transfer` symbol, its arguments, the
+    ///   auth entries, the operations list, the signature bytes or the
+    ///   signatures list);
+    /// - the transaction hash cannot be computed while signing;
+    /// - a finished transaction envelope cannot be serialized to base64 XDR,
+    ///   in `MppClient::get_with_payment`.
+    ///
+    /// It is also returned for two conditions that are not XDR failures but
+    /// have no more specific variant: a signer or payer address that is not
+    /// an Ed25519 account (`sign_transaction`; `MppClient::get_with_payment`,
+    /// both on the unsponsored path and in a final check that applies to
+    /// every payment; and the server's own signer in sponsored
+    /// settlement). These are deliberate fold-ins: such an address has no
+    /// Ed25519 key to put in the transaction source or signature hint, so it
+    /// cannot be encoded as a transaction.
     XdrEncodingFailed {
         reason: String,
     },
