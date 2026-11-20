@@ -45,7 +45,26 @@ pub enum MppError {
     },
     /// The challenge has already passed its `expires` timestamp.
     ChallengeExpired,
-    /// `sorocharge-signer` failed to build or sign the charge entry.
+    /// `sorocharge-signer` returned an error that this crate passes through
+    /// unchanged, via `From<SorochargeError>` or the fallback arm in
+    /// `network::caip2_for_passphrase`.
+    ///
+    /// Returned when:
+    /// - building the charge authorization entry (`build_charge_entry`) fails
+    ///   in `MppClient::get_with_payment`;
+    /// - signing that entry (`sign_entry`) fails in the same method;
+    /// - the [`Signer`](sorocharge_signer::Signer) fails to sign the outer
+    ///   transaction hash, in `sign_transaction`. That runs for the
+    ///   client's unsponsored (`feePayer: false`) transaction and for the
+    ///   server's sponsored settlement transaction;
+    /// - `sorocharge_signer::caip2_for_passphrase` returns any error other
+    ///   than `UnsupportedNetwork`. That is a defensive fallback that cannot
+    ///   currently trigger, since `UnsupportedNetwork` is the only error
+    ///   that function produces.
+    ///
+    /// Signing and building failures are folded together because
+    /// `SorochargeError` already distinguishes them; match on the inner
+    /// error to tell them apart.
     Signing(SorochargeError),
     /// Building or parsing an XDR structure failed.
     XdrEncodingFailed {
